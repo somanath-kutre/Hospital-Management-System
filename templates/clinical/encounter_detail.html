@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+{% block title %}{{ enc.ref_no }}{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-start mb-3 flex-wrap gap-2">
+  <div>
+    <h3 class="mb-0">{{ enc.ref_no }} <span class="badge bg-{% if enc.visit_type == 'IPD' %}warning text-dark{% else %}info text-dark{% endif %}">{{ enc.visit_type }}</span>
+      <span class="badge bg-{% if enc.is_active %}success{% else %}secondary{% endif %}">{{ enc.get_status_display }}</span></h3>
+    <div class="text-muted"><a href="{% url 'patient_detail' enc.patient.pk %}">{{ enc.patient.full_name }}</a> ({{ enc.patient.code }}) · {{ enc.doctor.doctor_label }} · {{ enc.admitted_at|date:"d M Y H:i" }}
+      {% if enc.visit_type == 'IPD' %}· {{ enc.bed|default:"no bed" }}{% endif %}
+      {% if enc.discharged_at %}· closed {{ enc.discharged_at|date:"d M Y H:i" }}{% endif %}</div>
+  </div>
+  <div class="d-flex gap-2 flex-wrap no-print">
+    {% if can_edit %}
+      <a class="btn btn-outline-primary" href="{% url 'encounter_edit' enc.pk %}">Diagnosis &amp; notes</a>
+      {% if enc.is_active %}<a class="btn btn-outline-primary" href="{% url 'treatment_add' enc.pk %}">Add treatment</a>{% endif %}
+      <a class="btn btn-outline-primary" href="{% url 'prescription_add' enc.pk %}">Write prescription</a>
+    {% endif %}
+    {% if can_close and enc.is_active %}<a class="btn btn-warning" href="{% url 'encounter_close' enc.pk %}">{% if enc.visit_type == 'IPD' %}Discharge{% else %}Complete visit{% endif %}</a>{% endif %}
+    {% if can_bill and not invoices %}<form method="post" action="{% url 'invoice_from_encounter' enc.pk %}">{% csrf_token %}<button class="btn btn-success">Generate invoice</button></form>{% endif %}
+  </div>
+</div>
+
+{% if enc.patient.allergies %}<div class="alert alert-danger py-2"><b>Allergies:</b> {{ enc.patient.allergies }}</div>{% endif %}
+
+<div class="row g-3">
+  <div class="col-lg-6"><div class="card shadow-sm h-100"><div class="card-header">Clinical details</div><div class="card-body">
+    <p><b>Chief complaint</b><br>{{ enc.chief_complaint|default:"—"|linebreaksbr }}</p>
+    <p><b>Diagnosis</b><br>{{ enc.diagnosis|default:"—"|linebreaksbr }}</p>
+    <p><b>Notes</b><br>{{ enc.notes|default:"—"|linebreaksbr }}</p>
+    {% if enc.discharge_summary %}<p class="mb-0"><b>Discharge / closing summary</b><br>{{ enc.discharge_summary|linebreaksbr }}</p>{% endif %}
+  </div></div></div>
+  <div class="col-lg-6">
+    <div class="card shadow-sm mb-3"><div class="card-header">Treatments</div>
+      <ul class="list-group list-group-flush">
+        {% for t in treatments %}<li class="list-group-item"><b>{{ t.title }}</b> <small class="text-muted">{{ t.date|date:"d M H:i" }}{% if t.charge %} · ₹{{ t.charge }}{% endif %}</small><br>{{ t.description }}</li>
+        {% empty %}<li class="list-group-item text-muted">None recorded.</li>{% endfor %}
+      </ul></div>
+    <div class="card shadow-sm"><div class="card-header">Prescriptions</div>
+      <ul class="list-group list-group-flush">
+        {% for rx in prescriptions %}<li class="list-group-item"><a href="{% url 'prescription_detail' rx.pk %}">Rx #{{ rx.pk }}</a> · {{ rx.created_at|date:"d M Y" }} · {{ rx.items.all|length }} medicine(s)</li>
+        {% empty %}<li class="list-group-item text-muted">None.</li>{% endfor %}
+      </ul></div>
+  </div>
+  {% if invoices %}
+  <div class="col-12"><div class="card shadow-sm"><div class="card-header">Invoices</div>
+    <ul class="list-group list-group-flush">
+      {% for i in invoices %}<li class="list-group-item d-flex justify-content-between"><a href="{% url 'invoice_detail' i.pk %}">{{ i.number }}</a><span>₹{{ i.total }} · {{ i.status }}</span></li>{% endfor %}
+    </ul></div></div>
+  {% endif %}
+</div>
+{% endblock %}

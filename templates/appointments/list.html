@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% block title %}Appointments{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between mb-3">
+  <h3>Appointments</h3>
+  {% if is_front_desk or is_patient %}<a class="btn btn-primary" href="{% url 'appointment_create' %}">Book appointment</a>{% endif %}
+</div>
+<form class="row g-2 mb-3" method="get">
+  <div class="col-auto"><select class="form-select" name="when">
+    <option value="upcoming" {% if when == 'upcoming' %}selected{% endif %}>Upcoming</option>
+    <option value="today" {% if when == 'today' %}selected{% endif %}>Today</option>
+    <option value="past" {% if when == 'past' %}selected{% endif %}>Past</option>
+    <option value="all" {% if when == 'all' %}selected{% endif %}>All</option></select></div>
+  <div class="col-auto"><select class="form-select" name="status"><option value="">Any status</option>
+    {% for v, l in statuses %}<option value="{{ v }}" {% if status == v %}selected{% endif %}>{{ l }}</option>{% endfor %}</select></div>
+  <div class="col-auto"><button class="btn btn-outline-primary">Filter</button></div>
+</form>
+<div class="card shadow-sm"><table class="table align-middle mb-0">
+  <thead><tr><th>When</th><th>Patient</th><th>Doctor</th><th>Reason</th><th>Status</th><th></th></tr></thead><tbody>
+  {% for a in appointments %}
+  <tr><td>{{ a.date }} {{ a.time|time:"H:i" }}</td><td>{{ a.patient.full_name }}</td><td>{{ a.doctor.doctor_label }}</td><td>{{ a.reason }}</td>
+    <td><span class="badge bg-{% if a.status == 'scheduled' %}primary{% elif a.status == 'completed' %}success{% else %}secondary{% endif %}">{{ a.get_status_display }}</span></td>
+    <td class="text-end">
+      {% if a.status == 'scheduled' %}
+        {% if not is_patient %}<form class="d-inline" method="post" action="{% url 'appointment_consult' a.pk %}">{% csrf_token %}<button class="btn btn-sm btn-success">Start OPD visit</button></form>
+        <form class="d-inline" method="post" action="{% url 'appointment_status' a.pk 'no_show' %}">{% csrf_token %}<button class="btn btn-sm btn-outline-secondary">No show</button></form>{% endif %}
+        <form class="d-inline" method="post" action="{% url 'appointment_status' a.pk 'cancelled' %}" onsubmit="return confirm('Cancel this appointment?')">{% csrf_token %}<button class="btn btn-sm btn-outline-danger">Cancel</button></form>
+      {% endif %}
+    </td></tr>
+  {% empty %}<tr><td colspan="6" class="text-muted">No appointments.</td></tr>{% endfor %}
+</tbody></table></div>
+{% endblock %}

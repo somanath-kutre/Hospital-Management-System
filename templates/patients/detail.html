@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% block title %}{{ patient.full_name }}{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-start mb-3">
+  <div><h3 class="mb-0">{{ patient.full_name }}</h3><div class="text-muted">{{ patient.code }} · {{ patient.age }} yrs · {{ patient.get_gender_display }}{% if patient.blood_group %} · {{ patient.blood_group }}{% endif %}</div></div>
+  <div class="d-flex gap-2">
+    {% if is_front_desk %}<a class="btn btn-outline-primary" href="{% url 'patient_edit' patient.pk %}">Edit</a>
+    <a class="btn btn-outline-primary" href="{% url 'encounter_create' %}">New visit / admission</a>{% endif %}
+  </div>
+</div>
+<div class="row g-3">
+  <div class="col-lg-4"><div class="card shadow-sm"><div class="card-header">Details</div><div class="card-body small">
+    <p class="mb-1"><b>Phone:</b> {{ patient.phone|default:"—" }}</p>
+    <p class="mb-1"><b>Email:</b> {{ patient.email|default:"—" }}</p>
+    <p class="mb-1"><b>DOB:</b> {{ patient.date_of_birth }}</p>
+    <p class="mb-1"><b>Address:</b> {{ patient.address|default:"—" }}</p>
+    <p class="mb-1"><b>Emergency contact:</b> {{ patient.emergency_contact|default:"—" }}</p>
+    <p class="mb-1 text-danger"><b>Allergies:</b> {{ patient.allergies|default:"None recorded" }}</p>
+    <p class="mb-0"><b>Chronic conditions:</b> {{ patient.chronic_conditions|default:"None recorded" }}</p>
+  </div></div></div>
+  <div class="col-lg-8">
+    <div class="card shadow-sm mb-3"><div class="card-header">Treatment history (OPD / IPD)</div>
+      <table class="table mb-0"><thead><tr><th>Ref</th><th>Type</th><th>Date</th><th>Doctor</th><th>Diagnosis</th><th>Status</th></tr></thead><tbody>
+      {% for e in encounters %}<tr><td><a href="{% url 'encounter_detail' e.pk %}">{{ e.ref_no }}</a></td><td>{{ e.visit_type }}</td><td>{{ e.admitted_at|date:"d M Y" }}</td><td>{{ e.doctor.doctor_label }}</td><td>{{ e.diagnosis|truncatechars:40 }}</td><td>{{ e.get_status_display }}</td></tr>
+      {% empty %}<tr><td colspan="6" class="text-muted">No records.</td></tr>{% endfor %}</tbody></table></div>
+    <div class="card shadow-sm mb-3"><div class="card-header">Appointments</div>
+      <ul class="list-group list-group-flush">{% for a in appointments %}<li class="list-group-item">{{ a.date }} {{ a.time|time:"H:i" }} · {{ a.doctor.doctor_label }} · {{ a.get_status_display }}</li>
+      {% empty %}<li class="list-group-item text-muted">None.</li>{% endfor %}</ul></div>
+    {% if can_billing %}
+    <div class="card shadow-sm"><div class="card-header">Invoices</div>
+      <table class="table mb-0"><thead><tr><th>No.</th><th>Date</th><th>Total</th><th>Balance</th><th>Status</th></tr></thead><tbody>
+      {% for i in invoices %}<tr><td><a href="{% url 'invoice_detail' i.pk %}">{{ i.number }}</a></td><td>{{ i.created_at|date:"d M Y" }}</td><td>₹{{ i.total }}</td><td>₹{{ i.balance }}</td><td>{{ i.status }}</td></tr>
+      {% empty %}<tr><td colspan="5" class="text-muted">No invoices.</td></tr>{% endfor %}</tbody></table></div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

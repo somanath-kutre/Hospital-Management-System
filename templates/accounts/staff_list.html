@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% block title %}Staff{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between mb-3"><h3>Staff &amp; doctors</h3><a class="btn btn-primary" href="{% url 'staff_add' %}">Add staff</a></div>
+<div class="card shadow-sm"><table class="table mb-0 align-middle">
+  <thead><tr><th>Username</th><th>Name</th><th>Role</th><th>Speciality / fee</th><th>Status</th><th></th></tr></thead>
+  <tbody>
+  {% for s in staff %}
+    <tr><td>{{ s.username }}</td><td>{{ s.display_name }}</td><td>{{ s.get_role_display }}</td>
+      <td>{% if s.doctor_profile %}{{ s.doctor_profile.specialization }} · ₹{{ s.doctor_profile.consultation_fee }}{% endif %}</td>
+      <td>{% if s.is_active %}<span class="badge bg-success">Active</span>{% else %}<span class="badge bg-danger">Disabled</span>{% endif %}</td>
+      <td><form method="post" action="{% url 'staff_toggle' s.pk %}">{% csrf_token %}<button class="btn btn-sm btn-outline-secondary">{% if s.is_active %}Deactivate{% else %}Activate{% endif %}</button></form></td></tr>
+  {% endfor %}
+  </tbody></table></div>
+{% endblock %}

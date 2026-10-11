@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+{% block title %}OPD / IPD{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between mb-3">
+  <h3>{% if is_patient %}My treatments{% else %}OPD &amp; IPD records{% endif %}</h3>
+  {% if not is_patient %}<a class="btn btn-primary" href="{% url 'encounter_create' %}">New OPD visit / IPD admission</a>{% endif %}
+</div>
+<form class="row g-2 mb-3" method="get">
+  <div class="col-auto"><select class="form-select" name="type"><option value="">OPD + IPD</option>
+    <option value="OPD" {% if vtype == 'OPD' %}selected{% endif %}>OPD</option><option value="IPD" {% if vtype == 'IPD' %}selected{% endif %}>IPD</option></select></div>
+  <div class="col-auto"><select class="form-select" name="status"><option value="">Any status</option>
+    <option value="active" {% if status == 'active' %}selected{% endif %}>Active</option><option value="closed" {% if status == 'closed' %}selected{% endif %}>Closed</option></select></div>
+  <div class="col-auto"><button class="btn btn-outline-primary">Filter</button></div>
+</form>
+<div class="card shadow-sm"><table class="table table-hover mb-0">
+  <thead><tr><th>Ref</th><th>Patient</th><th>Type</th><th>Date</th><th>Doctor</th><th>Bed</th><th>Status</th></tr></thead><tbody>
+  {% for e in encounters %}
+    <tr><td><a href="{% url 'encounter_detail' e.pk %}">{{ e.ref_no }}</a></td><td>{{ e.patient.full_name }}</td>
+      <td><span class="badge bg-{% if e.visit_type == 'IPD' %}warning text-dark{% else %}info text-dark{% endif %}">{{ e.visit_type }}</span></td>
+      <td>{{ e.admitted_at|date:"d M Y H:i" }}</td><td>{{ e.doctor.doctor_label }}</td><td>{{ e.bed|default:"—" }}</td><td>{{ e.get_status_display }}</td></tr>
+  {% empty %}<tr><td colspan="7" class="text-muted">No records.</td></tr>{% endfor %}
+</tbody></table></div>
+{% endblock %}

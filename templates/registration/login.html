@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+{% block title %}Sign in{% endblock %}
+{% block content %}
+<div class="row justify-content-center"><div class="col-md-5">
+  <div class="card shadow-sm"><div class="card-body p-4">
+    <h4 class="mb-3">Sign in</h4>
+    <form method="post">{% csrf_token %}
+      {% for e in form.non_field_errors %}<div class="alert alert-danger">{{ e }}</div>{% endfor %}
+      <div class="mb-3"><label class="form-label">Username</label><input name="username" class="form-control" autofocus required></div>
+      <div class="mb-3"><label class="form-label">Password</label><input type="password" name="password" class="form-control" required></div>
+      <input type="hidden" name="next" value="{{ next }}">
+      <button class="btn btn-primary w-100">Login</button>
+    </form>
+    <hr>
+    <p class="mb-0 small">New patient? <a href="{% url 'register' %}">Create an account</a></p>
+  </div></div>
+</div></div>
+{% endblock %}

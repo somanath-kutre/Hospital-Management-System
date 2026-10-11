@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% block title %}Write prescription{% endblock %}
+{% block content %}
+<h4>Prescription - {{ enc.patient.full_name }} <small class="text-muted">({{ enc.ref_no }})</small></h4>
+{% if enc.patient.allergies %}<div class="alert alert-danger py-2"><b>Allergies:</b> {{ enc.patient.allergies }}</div>{% endif %}
+<form method="post" class="card shadow-sm"><div class="card-body">{% csrf_token %}
+  {{ formset.management_form }}
+  {% for e in formset.non_form_errors %}<div class="alert alert-danger">{{ e }}</div>{% endfor %}
+  <div class="table-responsive"><table class="table table-sm align-middle">
+    <thead><tr><th>Medicine</th><th>Dosage</th><th>Frequency</th><th>Duration</th><th>Instructions</th></tr></thead>
+    <tbody>
+    {% for f in formset %}
+      <tr>{% for h in f.hidden_fields %}{{ h }}{% endfor %}
+        <td>{{ f.medicine }}{{ f.medicine.errors }}</td><td>{{ f.dosage }}{{ f.dosage.errors }}</td><td>{{ f.frequency }}{{ f.frequency.errors }}</td>
+        <td>{{ f.duration }}{{ f.duration.errors }}</td><td>{{ f.instructions }}</td></tr>
+    {% endfor %}
+    </tbody></table></div>
+  {% include 'partials/form_fields.html' %}
+  <button class="btn btn-primary">Save prescription</button>
+  <a class="btn btn-link" href="{% url 'encounter_detail' enc.pk %}">Cancel</a>
+</div></form>
+{% endblock %}

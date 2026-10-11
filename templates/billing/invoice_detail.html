@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+{% block title %}{{ invoice.number }}{% endblock %}
+{% block content %}
+<div class="card shadow-sm"><div class="card-body p-4">
+  <div class="d-flex justify-content-between border-bottom pb-3 mb-3">
+    <div><h4 class="mb-0">Invoice {{ invoice.number }}</h4><div class="text-muted">{{ invoice.created_at|date:"d M Y" }}{% if invoice.encounter %} · Visit {{ invoice.encounter.ref_no }}{% endif %}</div></div>
+    <div class="text-end"><b>MediCare HMS</b><br>
+      <span class="badge fs-6 bg-{% if invoice.status == 'Paid' %}success{% elif invoice.status == 'Partial' %}warning text-dark{% else %}danger{% endif %}">{{ invoice.status }}</span></div>
+  </div>
+  <p><b>Patient:</b> {{ invoice.patient.full_name }} ({{ invoice.patient.code }}){% if invoice.notes %}<br><b>Notes:</b> {{ invoice.notes }}{% endif %}</p>
+  <table class="table">
+    <thead><tr><th>Description</th><th class="text-end">Qty</th><th class="text-end">Unit price</th><th class="text-end">Amount</th></tr></thead><tbody>
+    {% for i in invoice.items.all %}<tr><td>{{ i.description }}</td><td class="text-end">{{ i.quantity }}</td><td class="text-end">₹{{ i.unit_price }}</td><td class="text-end">₹{{ i.amount }}</td></tr>
+    {% empty %}<tr><td colspan="4" class="text-muted">No items yet.</td></tr>{% endfor %}
+    </tbody>
+    <tfoot>
+      <tr><td colspan="3" class="text-end">Subtotal</td><td class="text-end">₹{{ invoice.subtotal }}</td></tr>
+      <tr><td colspan="3" class="text-end">Discount</td><td class="text-end">− ₹{{ invoice.discount }}</td></tr>
+      <tr class="fw-bold"><td colspan="3" class="text-end">Total</td><td class="text-end">₹{{ invoice.total }}</td></tr>
+      <tr><td colspan="3" class="text-end">Paid</td><td class="text-end">₹{{ invoice.paid }}</td></tr>
+      <tr class="fw-bold"><td colspan="3" class="text-end">Balance due</td><td class="text-end text-danger">₹{{ invoice.balance }}</td></tr>
+    </tfoot>
+  </table>
+  <h6>Payments</h6>
+  <ul class="list-unstyled small">{% for p in invoice.payments.all %}<li>{{ p.paid_on }} · ₹{{ p.amount }} · {{ p.get_method_display }} {% if p.reference %}({{ p.reference }}){% endif %}</li>{% empty %}<li class="text-muted">No payments yet.</li>{% endfor %}</ul>
+</div></div>
+
+<div class="mt-3 no-print"><button class="btn btn-primary" onclick="window.print()">Print</button>
+  {% if can_manage %}<a class="btn btn-outline-primary" href="{% url 'invoice_edit' invoice.pk %}">Discount / notes</a>{% endif %}
+  <a class="btn btn-link" href="{% url 'invoice_list' %}">Back to billing</a></div>
+
+{% if can_manage %}
+<div class="row g-3 mt-1 no-print">
+  <div class="col-lg-6"><div class="card shadow-sm"><div class="card-header">Add line item</div>
+    <form class="card-body" method="post" action="{% url 'invoice_add_item' invoice.pk %}">{% csrf_token %}
+      {% with form=item_form %}{% include 'partials/form_fields.html' %}{% endwith %}
+      <button class="btn btn-outline-primary">Add item</button></form></div></div>
+  <div class="col-lg-6"><div class="card shadow-sm"><div class="card-header">Record payment</div>
+    <form class="card-body" method="post" action="{% url 'invoice_add_payment' invoice.pk %}">{% csrf_token %}
+      {% with form=payment_form %}{% include 'partials/form_fields.html' %}{% endwith %}
+      <button class="btn btn-success">Record payment</button></form></div></div>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% block title %}Prescription #{{ rx.pk }}{% endblock %}
+{% block content %}
+<div class="card shadow-sm"><div class="card-body p-4">
+  <div class="d-flex justify-content-between border-bottom pb-3 mb-3">
+    <div><h4 class="mb-0">{{ rx.doctor.doctor_label }}</h4>
+      <div class="text-muted">{% if rx.doctor.doctor_profile %}{{ rx.doctor.doctor_profile.specialization }} · {{ rx.doctor.doctor_profile.qualification }}{% endif %}</div></div>
+    <div class="text-end"><b>MediCare HMS</b><br>Prescription #{{ rx.pk }}<br>{{ rx.created_at|date:"d M Y" }}</div>
+  </div>
+  <p><b>Patient:</b> {{ enc.patient.full_name }} ({{ enc.patient.code }}) · {{ enc.patient.age }} yrs / {{ enc.patient.get_gender_display }}
+    <br><b>Visit:</b> {{ enc.ref_no }} ({{ enc.visit_type }})
+    {% if enc.diagnosis %}<br><b>Diagnosis:</b> {{ enc.diagnosis }}{% endif %}
+    {% if enc.patient.allergies %}<br><b class="text-danger">Allergies:</b> {{ enc.patient.allergies }}{% endif %}</p>
+  <h5>Rx</h5>
+  <table class="table table-bordered">
+    <thead><tr><th>#</th><th>Medicine</th><th>Dosage</th><th>Frequency</th><th>Duration</th><th>Instructions</th></tr></thead><tbody>
+    {% for i in rx.items.all %}<tr><td>{{ forloop.counter }}</td><td>{{ i.medicine }}</td><td>{{ i.dosage }}</td><td>{{ i.frequency }}</td><td>{{ i.duration }}</td><td>{{ i.instructions }}</td></tr>{% endfor %}
+  </tbody></table>
+  {% if rx.advice %}<p><b>Advice:</b> {{ rx.advice|linebreaksbr }}</p>{% endif %}
+  <div class="text-end mt-5">______________________<br>{{ rx.doctor.doctor_label }}</div>
+</div></div>
+<div class="mt-3 no-print"><button class="btn btn-primary" onclick="window.print()">Print</button>
+  <a class="btn btn-link" href="{% url 'encounter_detail' enc.pk %}">Back to visit</a></div>
+{% endblock %}

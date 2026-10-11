@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<h3 class="mb-4">Welcome, {{ user.display_name }}</h3>
+
+{% if mode == 'front' %}
+<div class="row g-3 mb-4">
+  <div class="col-6 col-lg-3"><div class="card stat shadow-sm"><div class="card-body"><div class="text-muted small">Registered patients</div><div class="fs-3">{{ patient_count }}</div></div></div></div>
+  <div class="col-6 col-lg-3"><div class="card stat shadow-sm"><div class="card-body"><div class="text-muted small">OPD visits today</div><div class="fs-3">{{ opd_today }}</div></div></div></div>
+  <div class="col-6 col-lg-3"><div class="card stat shadow-sm"><div class="card-body"><div class="text-muted small">Admitted (IPD)</div><div class="fs-3">{{ ipd_active|length }}</div></div></div></div>
+  <div class="col-6 col-lg-3"><div class="card stat shadow-sm"><div class="card-body"><div class="text-muted small">Collected today</div><div class="fs-3">₹{{ revenue_today }}</div></div></div></div>
+</div>
+<div class="mb-4 d-flex flex-wrap gap-2">
+  <a class="btn btn-primary" href="{% url 'patient_add' %}">Register patient</a>
+  <a class="btn btn-outline-primary" href="{% url 'appointment_create' %}">Book appointment</a>
+  <a class="btn btn-outline-primary" href="{% url 'encounter_create' %}">New OPD visit / IPD admission</a>
+  <a class="btn btn-outline-primary" href="{% url 'invoice_new' %}">New invoice</a>
+</div>
+<div class="row g-3">
+  <div class="col-lg-6"><div class="card shadow-sm"><div class="card-header">Today's appointments</div>
+    <ul class="list-group list-group-flush">
+      {% for a in todays_appointments %}<li class="list-group-item d-flex justify-content-between"><span>{{ a.time|time:"H:i" }} · {{ a.patient.full_name }} → {{ a.doctor.doctor_label }}</span><span class="badge bg-secondary">{{ a.get_status_display }}</span></li>
+      {% empty %}<li class="list-group-item text-muted">None today.</li>{% endfor %}
+    </ul></div></div>
+  <div class="col-lg-6"><div class="card shadow-sm"><div class="card-header">Admitted patients</div>
+    <ul class="list-group list-group-flush">
+      {% for e in ipd_active %}<li class="list-group-item"><a href="{% url 'encounter_detail' e.pk %}">{{ e.patient.full_name }}</a> · {{ e.bed }} · {{ e.doctor.doctor_label }}</li>
+      {% empty %}<li class="list-group-item text-muted">No active admissions.</li>{% endfor %}
+    </ul></div></div>
+  <div class="col-12"><div class="card shadow-sm"><div class="card-header">Pending payments</div>
+    <ul class="list-group list-group-flush">
+      {% for i in pending_invoices %}<li class="list-group-item d-flex justify-content-between"><a href="{% url 'invoice_detail' i.pk %}">{{ i.number }} · {{ i.patient.full_name }}</a><span class="text-danger">Due ₹{{ i.balance }}</span></li>
+      {% empty %}<li class="list-group-item text-muted">All invoices settled.</li>{% endfor %}
+    </ul></div></div>
+</div>
+
+{% elif mode == 'doctor' %}
+<div class="row g-3">
+  <div class="col-lg-6"><div class="card shadow-sm"><div class="card-header">My appointments today</div>
+    <ul class="list-group list-group-flush">
+      {% for a in todays_appointments %}<li class="list-group-item d-flex justify-content-between align-items-center">
+        <span>{{ a.time|time:"H:i" }} · {{ a.patient.full_name }} <small class="text-muted">{{ a.reason }}</small></span>
+        {% if a.status == 'scheduled' %}<form method="post" action="{% url 'appointment_consult' a.pk %}">{% csrf_token %}<button class="btn btn-sm btn-success">Start consult</button></form>
+        {% else %}<span class="badge bg-secondary">{{ a.get_status_display }}</span>{% endif %}</li>
+      {% empty %}<li class="list-group-item text-muted">No appointments today.</li>{% endfor %}
+    </ul></div></div>
+  <div class="col-lg-6"><div class="card shadow-sm"><div class="card-header">My admitted patients (IPD)</div>
+    <ul class="list-group list-group-flush">
+      {% for e in ipd_active %}<li class="list-group-item"><a href="{% url 'encounter_detail' e.pk %}">{{ e.patient.full_name }}</a> · {{ e.bed }}</li>
+      {% empty %}<li class="list-group-item text-muted">None.</li>{% endfor %}
+    </ul></div>
+    <div class="card shadow-sm mt-3"><div class="card-header">Open OPD visits</div>
+    <ul class="list-group list-group-flush">
+      {% for e in open_encounters %}<li class="list-group-item"><a href="{% url 'encounter_detail' e.pk %}">{{ e.patient.full_name }}</a> · {{ e.ref_no }}</li>
+      {% empty %}<li class="list-group-item text-muted">None.</li>{% endfor %}
+    </ul></div></div>
+</div>
+
+{% else %}
+{% if not patient %}
+  <div class="alert alert-warning">No patient record is linked to your account yet. Please contact the front desk.</div>
+{% else %}
+<div class="mb-4"><a class="btn btn-primary" href="{% url 'appointment_create' %}">Book an appointment</a>
+  <a class="btn btn-outline-primary" href="{% url 'my_profile' %}">My medical profile</a></div>
+<div class="row g-3">
+  <div class="col-lg-6"><div class="card shadow-sm"><div class="card-header">Upcoming appointments</div>
+    <ul class="list-group list-group-flush">
+      {% for a in upcoming %}<li class="list-group-item">{{ a.date }} {{ a.time|time:"H:i" }} · {{ a.doctor.doctor_label }}</li>
+      {% empty %}<li class="list-group-item text-muted">None scheduled.</li>{% endfor %}
+    </ul></div></div>
+  <div class="col-lg-6"><div class="card shadow-sm"><div class="card-header">Recent visits</div>
+    <ul class="list-group list-group-flush">
+      {% for e in recent_encounters %}<li class="list-group-item"><a href="{% url 'encounter_detail' e.pk %}">{{ e.ref_no }}</a> · {{ e.admitted_at|date:"d M Y" }} · {{ e.doctor.doctor_label }}</li>
+      {% empty %}<li class="list-group-item text-muted">No visits yet.</li>{% endfor %}
+    </ul></div></div>
+  <div class="col-12"><div class="card shadow-sm"><div class="card-header">Bills due</div>
+    <ul class="list-group list-group-flush">
+      {% for i in due_invoices %}<li class="list-group-item d-flex justify-content-between"><a href="{% url 'invoice_detail' i.pk %}">{{ i.number }}</a><span class="text-danger">₹{{ i.balance }}</span></li>
+      {% empty %}<li class="list-group-item text-muted">Nothing due.</li>{% endfor %}
+    </ul></div></div>
+</div>
+{% endif %}
+{% endif %}
+{% endblock %}

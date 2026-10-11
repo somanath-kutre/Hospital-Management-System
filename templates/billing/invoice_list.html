@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% block title %}Billing{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between mb-3"><h3>{% if is_patient %}My bills{% else %}Billing{% endif %}</h3>
+  {% if is_front_desk %}<a class="btn btn-primary" href="{% url 'invoice_new' %}">New invoice</a>{% endif %}</div>
+<form class="row g-2 mb-3" method="get">
+  <div class="col"><input class="form-control" name="q" value="{{ q }}" placeholder="Search invoice no., patient name or ID"></div>
+  <div class="col-auto"><select class="form-select" name="status"><option value="">Any status</option>
+    <option value="Unpaid" {% if status == 'Unpaid' %}selected{% endif %}>Unpaid</option>
+    <option value="Partial" {% if status == 'Partial' %}selected{% endif %}>Partial</option>
+    <option value="Paid" {% if status == 'Paid' %}selected{% endif %}>Paid</option></select></div>
+  <div class="col-auto"><button class="btn btn-outline-primary">Filter</button></div>
+</form>
+<div class="card shadow-sm"><table class="table table-hover mb-0">
+  <thead><tr><th>Invoice</th><th>Patient</th><th>Date</th><th class="text-end">Total</th><th class="text-end">Paid</th><th class="text-end">Balance</th><th>Status</th></tr></thead><tbody>
+  {% for i in invoices %}
+  <tr><td><a href="{% url 'invoice_detail' i.pk %}">{{ i.number }}</a></td><td>{{ i.patient.full_name }}</td><td>{{ i.created_at|date:"d M Y" }}</td>
+    <td class="text-end">₹{{ i.total }}</td><td class="text-end">₹{{ i.paid }}</td><td class="text-end">₹{{ i.balance }}</td>
+    <td><span class="badge bg-{% if i.status == 'Paid' %}success{% elif i.status == 'Partial' %}warning text-dark{% else %}danger{% endif %}">{{ i.status }}</span></td></tr>
+  {% empty %}<tr><td colspan="7" class="text-muted">No invoices.</td></tr>{% endfor %}
+</tbody></table></div>
+{% endblock %}
