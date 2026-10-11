@@ -5,7 +5,7 @@ prescriptions and billing, with role-based access.
 
 ## Quick start
 ```bash
-python -m venv venv && source venv/bin/activate      # Windows: venv\Scripts\activate
+python -m  venv venv && source venv/bin/activate      # Windows: venv\Scripts\activate
 pip install -r requirements.txt
 python manage.py makemigrations accounts patients appointments clinical billing
 python manage.py migrate
