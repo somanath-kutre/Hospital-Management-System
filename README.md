@@ -1,6 +1,6 @@
 # MediCare HMS – Hospital Management System (Django)
 
-Appointments,  patient records, OPD & IPD (admission / bed / discharge), treatments,
+Appointments, patient records, OPD & IPD (admission / bed / discharge), treatments,
 prescriptions and billing, with role-based access.
 
 ## Quick start
